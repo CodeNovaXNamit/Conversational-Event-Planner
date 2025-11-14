@@ -8,3 +8,4 @@ const RsvpSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model("Rsvp", RsvpSchema);
+
