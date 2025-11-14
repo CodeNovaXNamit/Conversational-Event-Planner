@@ -1,5 +1,5 @@
 const Conversation = require("../models/Conversation");
-const { runAI } = require("../config/huggingface");
+const { runAI } = require("../config/ai");
 const { cleanAIResponse } = require("../utils/cleanAI");
 const { searchVenues } = require("../services/foursquare.service");
 
