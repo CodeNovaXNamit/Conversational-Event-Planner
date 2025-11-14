@@ -1,6 +1,26 @@
 import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 
+function EventCard({ event }) {
+  if (!event) return null;
+
+  return (
+    <div className="bg-green-100 border-l-4 border-green-500 rounded-xl p-4 shadow animate-fadeIn max-w-xl mr-auto">
+      <h3 className="text-green-700 font-bold text-lg">🎉 Event Created!</h3>
+
+      <div className="mt-2 text-gray-700 text-sm space-y-1">
+        <p><strong>Title:</strong> {event.title}</p>
+        {event.date && <p><strong>Date:</strong> {event.date}</p>}
+        {event.time && <p><strong>Time:</strong> {event.time}</p>}
+        {event.location && <p><strong>Location:</strong> {event.location}</p>}
+        {event.guests && <p><strong>Guests:</strong> {event.guests}</p>}
+        {event.budget && <p><strong>Budget:</strong> ₹{event.budget}</p>}
+      </div>
+    </div>
+  );
+}
+
+
 export default function Chat() {
   const [input, setInput] = useState("");
   const [conversationId, setConversationId] = useState(null);
@@ -31,12 +51,31 @@ export default function Chat() {
 
       setConversationId(res.data.conversationId);
 
+
+
+      setMessages((prev) => [...prev, botMessage]);
+
       const botMessage = {
         sender: "bot",
         text: res.data.reply,
       };
 
       setMessages((prev) => [...prev, botMessage]);
+
+      if (res.data.eventCreated) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: "system",
+            type: "event-created",
+            event: res.data.event,
+          },
+        ]);
+      }
+
+
+
+      
     } catch (err) {
       setMessages((prev) => [
         ...prev,
@@ -60,18 +99,41 @@ export default function Chat() {
 
       {/* Message Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={`max-w-xl px-4 py-3 rounded-2xl shadow ${
-              msg.sender === "user"
-                ? "ml-auto bg-blue-500 text-white"
-                : "mr-auto bg-white text-gray-800"
-            }`}
-          >
-            {msg.text}
-          </div>
-        ))}
+
+        {messages.map((msg, index) => {
+          if (msg.type === "event-created") {
+            return (
+              <div
+                key={index}
+                className="mr-auto bg-green-100 border border-green-400 text-green-900 p-4 rounded-xl shadow-lg max-w-xl"
+              >
+                <h3 className="text-xl font-bold mb-2">✅ Event Created!</h3>
+                <p><strong>Title:</strong> {msg.event.title}</p>
+                <p><strong>Date:</strong> {msg.event.date}</p>
+                <p><strong>Time:</strong> {msg.event.time}</p>
+                <p><strong>Location:</strong> {msg.event.location}</p>
+                {msg.event.guests && (
+                  <p><strong>Guests:</strong> {msg.event.guests}</p>
+                )}
+              </div>
+            );
+          }
+
+          // Default messages
+          return (
+            <div
+              key={index}
+              className={`max-w-xl px-4 py-3 rounded-2xl shadow ${
+                msg.sender === "user"
+                  ? "ml-auto bg-blue-500 text-white"
+                  : "mr-auto bg-white text-gray-800"
+              }`}
+            >
+              {msg.text}
+            </div>
+          );
+        })}
+
 
         {loading && (
           <div className="mr-auto bg-white text-gray-500 px-4 py-3 rounded-2xl shadow">
