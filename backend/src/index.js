@@ -50,3 +50,4 @@ async function startServer() {
 }
 
 startServer();
+console.log("CHAT ROUTES:", chatRoutes);
