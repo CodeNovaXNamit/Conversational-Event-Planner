@@ -1,38 +1,37 @@
-const Conversation = require("../models/Conversation");
 const { runAI } = require("../config/ai");
-const { cleanAIResponse } = require("../utils/cleanAI");
-const { searchVenues } = require("../services/foursquare.service");
+const Conversation = require("../models/Conversation");
 
 async function handleChat(req, res) {
   try {
     const { message, conversationId } = req.body;
 
-    let convo = await Conversation.findById(conversationId);
-    if (!convo) {
-      convo = await Conversation.create({ messages: [] });
+    if (!message) {
+      return res.status(400).json({ error: "Message is required" });
     }
 
-    convo.messages.push({ sender: "user", text: message });
-    await convo.save();
+    const reply = await runAI(message);
 
-    const aiRaw = await runAI(message);
-    const aiResponse = cleanAIResponse(aiRaw);
+    let conv;
 
-    let venues = [];
-    if (aiResponse.toLowerCase().includes("venue")) {
-      venues = await searchVenues("restaurant", "New Delhi");
+    if (!conversationId) {
+      conv = await Conversation.create({
+        messages: [{ sender: "user", text: message }, { sender: "ai", text: reply }]
+      });
+    } else {
+      conv = await Conversation.findById(conversationId);
+      conv.messages.push({ sender: "user", text: message });
+      conv.messages.push({ sender: "ai", text: reply });
+      await conv.save();
     }
-
-    convo.messages.push({ sender: "ai", text: aiResponse });
-    await convo.save();
 
     res.json({
-      conversationId: convo._id,
-      reply: aiResponse,
-      venues,
+      conversationId: conv._id,
+      reply,
+      venues: [] // Placeholder for future venue recommendations
     });
+
   } catch (err) {
-    console.error(err);
+    console.error("CHAT ERROR:", err);
     res.status(500).json({ error: "AI error" });
   }
 }
